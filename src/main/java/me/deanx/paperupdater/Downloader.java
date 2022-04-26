@@ -29,7 +29,7 @@ public class Downloader {
     }
 
     public int[] getVersionBuilds(String version) throws IOException, InterruptedException {
-        String url = BASE_URL + version;
+        String url = BASE_URL + "versions/" + version;
         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
         HttpResponse<String> buildInfo = client.send(request, HttpResponse.BodyHandlers.ofString());
         if (buildInfo.statusCode() >= 400) {
