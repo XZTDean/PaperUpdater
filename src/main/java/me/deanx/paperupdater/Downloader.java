@@ -13,19 +13,17 @@ import java.nio.file.Path;
 
 public class Downloader {
     private static final String BASE_URL = "https://papermc.io/api/v2/projects/paper/";
-    private final HttpClient client;
+    private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
-    public Downloader() {
-        client = HttpClient.newHttpClient();
-    }
-
-    public void downloadJar(String url) throws IOException, InterruptedException {
+    private boolean downloadJar(String url) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
         HttpResponse<Path> file = client.send(request, HttpResponse.BodyHandlers.ofFile(Path.of("./paper.jar")));
         if (file.statusCode() >= 400) {
             System.out.println("Error");
+            return false;
         }
+        return true;
     }
 
     public int[] getVersionBuilds(String version) throws IOException, InterruptedException {
@@ -37,5 +35,21 @@ public class Downloader {
         }
         JsonObject jsonObject = JsonParser.parseString(buildInfo.body()).getAsJsonObject();
         return gson.fromJson(jsonObject.get("builds"), int[].class);
+    }
+
+    public int getLatestBuild(String version) throws IOException, InterruptedException {
+        int[] builds = getVersionBuilds(version);
+        return builds[builds.length - 1];
+    }
+
+    public boolean downloadBuild(String version, int build) throws IOException, InterruptedException {
+        String filename = String.format("paper-%s-%d.jar", version, build);
+        String url = BASE_URL + "versions/" + version + "/builds/" + build + "/downloads/" + filename;
+        return downloadJar(url);
+    }
+
+    public boolean downloadLatestBuild(String version) throws IOException, InterruptedException {
+        int latestBuild = getLatestBuild(version);
+        return downloadBuild(version, latestBuild);
     }
 }
