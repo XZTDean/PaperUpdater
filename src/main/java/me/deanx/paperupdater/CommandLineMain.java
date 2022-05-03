@@ -9,6 +9,8 @@ public class CommandLineMain {
         final Option VERSION = new Option("v", "version", true, "Specify the minecraft version");
         final Option VERSION_FAMILY = new Option("f", "family", true, "Specify the minecraft version family");
         final Option OUTPUT = new Option("o", "output", true, "Output file name and path");
+        final Option INTERACT = new Option("i", "interact", false, "Interact mode");
+        final Option HELP = new Option("h", "help", false, "Help page");
 
         Options options = new Options();
         options.addOption(LIST_INFO);
@@ -16,6 +18,8 @@ public class CommandLineMain {
         options.addOption(VERSION);
         options.addOption(VERSION_FAMILY);
         options.addOption(OUTPUT);
+        options.addOption(INTERACT);
+        options.addOption(HELP);
 
         CommandLineParser parser = new DefaultParser();
         CommandLine commandLine;
@@ -26,7 +30,11 @@ public class CommandLineMain {
             return;
         }
 
-        commandLine.hasOption(LIST_INFO);
+        if (commandLine.hasOption(HELP)) {
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("PaperUpdate", options);
+            return;
+        }
         Downloader downloader = new Downloader();
     }
 }
