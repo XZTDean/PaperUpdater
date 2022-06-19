@@ -1,5 +1,9 @@
 package me.deanx.paperupdater;
 
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class DownloadController {
     private String version = null;
     private String versionFamily = null;
@@ -40,27 +44,56 @@ public class DownloadController {
     }
 
     public String getVersion() {
+        if (version == null && versionFamily != null) {
+            try {
+                String[] versionList = getDownloader().getVersionsFromVersionFamily(versionFamily);
+                return versionList[versionList.length - 1];
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return version;
     }
 
     public void setVersion(String version) {
-        if (versionFamily != null && version != null) {
+        if (version == null || version.isBlank()) {
+            this.version = null;
+            return;
+        }
+        if (versionFamily != null) {
             if (!isInVersionFamily(version, versionFamily)) {
                 throw new IllegalArgumentException("Version does not match with the version family");
             }
+        }
+        Pattern pattern = Pattern.compile("\\d(?:\\.\\d{1,2})+");
+        Matcher matcher = pattern.matcher(version);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid version pattern");
         }
         this.version = version;
     }
 
     public String getVersionFamily() {
+        if (versionFamily == null && version != null) {
+            return getVersionFamilyFromVersion(version);
+        }
         return versionFamily;
     }
 
     public void setVersionFamily(String versionFamily) {
-        if (version != null && versionFamily != null) {
+        if (versionFamily == null || versionFamily.isBlank()) {
+            this.versionFamily = null;
+            return;
+        }
+        if (version != null) {
             if (!isInVersionFamily(version, versionFamily)) {
                 throw new IllegalArgumentException("Version family does not match with the version");
             }
+        }
+        Pattern pattern = Pattern.compile("\\d\\.\\d{1,2}");
+        Matcher matcher = pattern.matcher(version);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid version family pattern");
         }
         this.versionFamily = versionFamily;
     }
@@ -92,6 +125,13 @@ public class DownloadController {
         this.operation = operation;
     }
 
+    private Downloader getDownloader() {
+        if (downloader == null) {
+            downloader = new Downloader();
+        }
+        return downloader;
+    }
+
     private void updateDownloader() {
         if (downloader == null) {
             downloader = new Downloader(outputFile);
@@ -105,7 +145,18 @@ public class DownloadController {
     }
 
     static private boolean isInVersionFamily(String version, String versionFamily) {
-        return version.contains(versionFamily);
+        String calculatedVersionFamily = getVersionFamilyFromVersion(version);
+        return versionFamily.equals(calculatedVersionFamily);
+    }
+
+    static private String getVersionFamilyFromVersion(String version) {
+        Pattern pattern = Pattern.compile("^\\d\\.\\d{1,2}");
+        Matcher matcher = pattern.matcher(version);
+        if (matcher.find()) {
+            return matcher.group();
+        } else {
+            throw new IllegalArgumentException("Invalid version pattern");
+        }
     }
 
     private static final String DEFAULT_OUTPUT = "./paper.jar";

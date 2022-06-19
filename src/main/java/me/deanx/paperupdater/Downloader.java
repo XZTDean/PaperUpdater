@@ -65,4 +65,18 @@ public class Downloader {
         int latestBuild = getLatestBuild(version);
         return downloadBuild(version, latestBuild);
     }
+
+    public String[] getVersionsFromVersionFamily(String versionFamily) throws IOException, InterruptedException {
+        String url = BASE_URL + "version_group/" + versionFamily;
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
+        HttpResponse<String> versionInfo = client.send(request, HttpResponse.BodyHandlers.ofString());
+        if (versionInfo.statusCode() == 404) {
+            JsonObject jsonObject = JsonParser.parseString(versionInfo.body()).getAsJsonObject();
+            throw new IllegalArgumentException(jsonObject.getAsJsonPrimitive("error").getAsString());
+        } else if (versionInfo.statusCode() >= 400) {
+            throw new RuntimeException("Get response code " + versionInfo.statusCode() + " from " + url);
+        }
+        JsonObject jsonObject = JsonParser.parseString(versionInfo.body()).getAsJsonObject();
+        return gson.fromJson(jsonObject.get("versions"), String[].class);
+    }
 }
