@@ -35,9 +35,9 @@ public class DownloadController {
     public DownloadController(String version, String versionFamily, int build, String outputFile, Operation operation) {
         setVersionFamily(versionFamily);
         setVersion(version);
-        this.build = build;
-        this.outputFile = outputFile;
-        this.operation = operation;
+        setBuild(build);
+        setOutputFile(outputFile);
+        setOperation(operation);
     }
 
     public boolean download() {
@@ -78,6 +78,7 @@ public class DownloadController {
             this.version = null;
             return;
         }
+        version = version.strip();
         if (versionFamily != null) {
             if (!isInVersionFamily(version, versionFamily)) {
                 throw new IllegalArgumentException("Version does not match with the version family");
@@ -107,6 +108,7 @@ public class DownloadController {
             this.versionFamily = null;
             return;
         }
+        versionFamily = versionFamily.strip();
         if (version != null) {
             if (!isInVersionFamily(version, versionFamily)) {
                 throw new IllegalArgumentException("Version family does not match with the version");
@@ -125,6 +127,9 @@ public class DownloadController {
     }
 
     public void setBuild(int build) {
+        if (build < -1) {
+            throw new IllegalArgumentException("Invalid build");
+        }
         this.build = build;
     }
 
@@ -133,10 +138,11 @@ public class DownloadController {
     }
 
     public void setOutputFile(String outputFile) {
-        if (outputFile == null) {
+        if (outputFile == null || outputFile.isBlank()) {
             this.outputFile = DEFAULT_OUTPUT;
+            return;
         }
-        this.outputFile = outputFile;
+        this.outputFile = outputFile.strip();
     }
 
     public Operation getOperation() {
