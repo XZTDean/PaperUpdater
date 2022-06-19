@@ -5,17 +5,31 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DownloadController {
-    private String version = null;
-    private String versionFamily = null;
+    private String version;
+    private String versionFamily;
     private int build;
     private String outputFile;
     private Operation operation;
     private Downloader downloader = null;
 
     public DownloadController() {
-        build = 0;
-        outputFile = DEFAULT_OUTPUT;
-        operation = Operation.download;
+        this(Operation.download);
+    }
+
+    public DownloadController(String outputFile) {
+        this(outputFile, Operation.download);
+    }
+
+    public DownloadController(Operation operation) {
+        this(DEFAULT_OUTPUT, operation);
+    }
+
+    public DownloadController(String outputFile, Operation operation) {
+        this(null, null, outputFile, operation);
+    }
+
+    public DownloadController(String version, String versionFamily, String outputFile, Operation operation) {
+        this(version, versionFamily, -1, outputFile, operation);
     }
 
     public DownloadController(String version, String versionFamily, int build, String outputFile, Operation operation) {
@@ -43,7 +57,7 @@ public class DownloadController {
         return "";
     }
 
-    public String getVersion() {
+    public String getCalculatedVersion() {
         if (version == null && versionFamily != null) {
             try {
                 String[] versionList = getDownloader().getVersionsFromVersionFamily(versionFamily);
@@ -52,6 +66,10 @@ public class DownloadController {
                 throw new RuntimeException(e);
             }
         }
+        return version;
+    }
+
+    public String getVersion() {
         return version;
     }
 
@@ -73,10 +91,14 @@ public class DownloadController {
         this.version = version;
     }
 
-    public String getVersionFamily() {
+    public String getCalculatedVersionFamily() {
         if (versionFamily == null && version != null) {
             return getVersionFamilyFromVersion(version);
         }
+        return versionFamily;
+    }
+
+    public String getVersionFamily() {
         return versionFamily;
     }
 
