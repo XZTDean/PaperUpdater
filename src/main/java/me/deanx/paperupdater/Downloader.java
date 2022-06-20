@@ -41,13 +41,11 @@ public class Downloader {
 
     public int[] getVersionBuilds(String version) throws IOException, InterruptedException {
         String url = BASE_URL + "versions/" + version;
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
-        HttpResponse<String> buildInfo = client.send(request, HttpResponse.BodyHandlers.ofString());
-        if (buildInfo.statusCode() >= 400) {
+        HttpJsonResponse response = httpGetJson(url);
+        if (response.statusCode() >= 400) {
             System.out.println("Error");
         }
-        JsonObject jsonObject = JsonParser.parseString(buildInfo.body()).getAsJsonObject();
-        return gson.fromJson(jsonObject.get("builds"), int[].class);
+        return gson.fromJson(response.getJson().get("builds"), int[].class);
     }
 
     public int getLatestBuild(String version) throws IOException, InterruptedException {
@@ -56,9 +54,13 @@ public class Downloader {
     }
 
     public boolean downloadBuild(String version, int build) throws IOException, InterruptedException {
-        String filename = String.format("paper-%s-%d.jar", version, build);
-        String url = BASE_URL + "versions/" + version + "/builds/" + build + "/downloads/" + filename;
+        String url = getUrl(version, build);
         return downloadJar(url);
+    }
+
+    private String getUrl(String version, int build) {
+        String filename = String.format("paper-%s-%d.jar", version, build);
+        return BASE_URL + "versions/" + version + "/builds/" + build + "/downloads/" + filename;
     }
 
     public boolean downloadLatestBuild(String version) throws IOException, InterruptedException {
@@ -68,15 +70,59 @@ public class Downloader {
 
     public String[] getVersionsFromVersionFamily(String versionFamily) throws IOException, InterruptedException {
         String url = BASE_URL + "version_group/" + versionFamily;
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
-        HttpResponse<String> versionInfo = client.send(request, HttpResponse.BodyHandlers.ofString());
-        if (versionInfo.statusCode() == 404) {
-            JsonObject jsonObject = JsonParser.parseString(versionInfo.body()).getAsJsonObject();
-            throw new IllegalArgumentException(jsonObject.getAsJsonPrimitive("error").getAsString());
-        } else if (versionInfo.statusCode() >= 400) {
-            throw new RuntimeException("Get response code " + versionInfo.statusCode() + " from " + url);
+        HttpJsonResponse response = httpGetJson(url);
+        if (response.statusCode() == 404) {
+            throw new IllegalArgumentException(response.getJson().getAsJsonPrimitive("error").getAsString());
+        } else if (response.statusCode() >= 400) {
+            throw new RuntimeException("Get response code " + response.statusCode() + " from " + url);
         }
-        JsonObject jsonObject = JsonParser.parseString(versionInfo.body()).getAsJsonObject();
-        return gson.fromJson(jsonObject.get("versions"), String[].class);
+        return gson.fromJson(response.getJson().get("versions"), String[].class);
+    }
+
+    public String[] getVersions() throws IOException, InterruptedException {
+        return getProjectInfo("versions");
+    }
+
+    public String[] getVersionFamilies() throws IOException, InterruptedException {
+        return getProjectInfo("version_groups");
+    }
+
+    private String[] getProjectInfo(String field) throws IOException, InterruptedException {
+        HttpJsonResponse response = httpGetJson(BASE_URL);
+        if (response.statusCode() == 404) {
+            throw new IllegalArgumentException(response.getJson().getAsJsonPrimitive("error").getAsString());
+        } else if (response.statusCode() >= 400) {
+            throw new RuntimeException("Get response code " + response.statusCode() + " from " + BASE_URL);
+        }
+        return gson.fromJson(response.getJson().get(field), String[].class);
+    }
+
+    private HttpJsonResponse httpGetJson(String url) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        return new HttpJsonResponse(response.body(), response.statusCode());
+    }
+
+    private static class HttpJsonResponse {
+        private final JsonObject json;
+        private final int responseCode;
+
+        public HttpJsonResponse(String json, int responseCode) {
+            this.json = JsonParser.parseString(json).getAsJsonObject();
+            this.responseCode = responseCode;
+        }
+
+        public HttpJsonResponse(JsonObject json, int responseCode) {
+            this.json = json;
+            this.responseCode = responseCode;
+        }
+
+        public JsonObject getJson() {
+            return json;
+        }
+
+        public int statusCode() {
+            return responseCode;
+        }
     }
 }
