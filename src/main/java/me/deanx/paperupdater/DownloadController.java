@@ -9,41 +9,28 @@ public class DownloadController {
     private String versionFamily;
     private int build;
     private String outputFile;
-    private Operation operation;
     private Downloader downloader = null;
 
     public DownloadController() {
-        this(Operation.download);
+        this(DEFAULT_OUTPUT);
     }
 
     public DownloadController(String outputFile) {
-        this(outputFile, Operation.download);
+        this(null, null, outputFile);
     }
 
-    public DownloadController(Operation operation) {
-        this(DEFAULT_OUTPUT, operation);
+    public DownloadController(String version, String versionFamily, String outputFile) {
+        this(version, versionFamily, -1, outputFile);
     }
 
-    public DownloadController(String outputFile, Operation operation) {
-        this(null, null, outputFile, operation);
-    }
-
-    public DownloadController(String version, String versionFamily, String outputFile, Operation operation) {
-        this(version, versionFamily, -1, outputFile, operation);
-    }
-
-    public DownloadController(String version, String versionFamily, int build, String outputFile, Operation operation) {
+    public DownloadController(String version, String versionFamily, int build, String outputFile) {
         setVersionFamily(versionFamily);
         setVersion(version);
         setBuild(build);
         setOutputFile(outputFile);
-        setOperation(operation);
     }
 
     public boolean download() {
-        if (operation != Operation.download) {
-            throw new IllegalStateException("Wrong operation");
-        }
         updateDownloader();
         String version = getCalculatedVersion();
         boolean success;
@@ -59,12 +46,17 @@ public class DownloadController {
         return success;
     }
 
-    public String info() {
-        if (operation != Operation.display) {
-            throw new IllegalStateException("Wrong operation");
+    public String getUrl() {
+        String version = getCalculatedVersion();
+        int build = this.build;
+        try {
+            if (build < 0) {
+                build = getDownloader().getLatestBuild(version);
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
-        // TODO
-        return "";
+        return downloader.getUrl(version, build);
     }
 
     public String getCalculatedVersion() {
@@ -155,14 +147,6 @@ public class DownloadController {
         this.outputFile = outputFile.strip();
     }
 
-    public Operation getOperation() {
-        return operation;
-    }
-
-    public void setOperation(Operation operation) {
-        this.operation = operation;
-    }
-
     private Downloader getDownloader() {
         if (downloader == null) {
             downloader = new Downloader();
@@ -176,10 +160,6 @@ public class DownloadController {
         } else {
             downloader.setOutputFile(outputFile);
         }
-    }
-
-    public enum Operation {
-        download, display
     }
 
     static private boolean isInVersionFamily(String version, String versionFamily) {

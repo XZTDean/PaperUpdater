@@ -58,7 +58,7 @@ public class Downloader {
         return downloadJar(url);
     }
 
-    private String getUrl(String version, int build) {
+    public String getUrl(String version, int build) {
         String filename = String.format("paper-%s-%d.jar", version, build);
         return BASE_URL + "versions/" + version + "/builds/" + build + "/downloads/" + filename;
     }
