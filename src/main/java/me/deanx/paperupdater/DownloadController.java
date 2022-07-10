@@ -45,8 +45,18 @@ public class DownloadController {
             throw new IllegalStateException("Wrong operation");
         }
         updateDownloader();
-        // TODO
-        return true;
+        String version = getCalculatedVersion();
+        boolean success;
+        try {
+            if (build < 0) {
+                success = downloader.downloadLatestBuild(version);
+            } else {
+                success = downloader.downloadBuild(version, build);
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return success;
     }
 
     public String info() {
@@ -67,6 +77,13 @@ public class DownloadController {
             }
         }
         return version;
+    }
+
+    public String getCalculatedVersionFamily() {
+        if (versionFamily == null && version != null) {
+            return getVersionFamilyFromVersion(version);
+        }
+        return versionFamily;
     }
 
     public String getVersion() {
@@ -90,13 +107,6 @@ public class DownloadController {
             throw new IllegalArgumentException("Invalid version pattern");
         }
         this.version = version;
-    }
-
-    public String getCalculatedVersionFamily() {
-        if (versionFamily == null && version != null) {
-            return getVersionFamilyFromVersion(version);
-        }
-        return versionFamily;
     }
 
     public String getVersionFamily() {
