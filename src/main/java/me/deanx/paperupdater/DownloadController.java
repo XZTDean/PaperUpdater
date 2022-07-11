@@ -48,14 +48,7 @@ public class DownloadController {
 
     public String getUrl() {
         String version = getCalculatedVersion();
-        int build = this.build;
-        try {
-            if (build < 0) {
-                build = getDownloader().getLatestBuild(version);
-            }
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        int build = getCalculatedBuild();
         return downloader.getUrl(version, build);
     }
 
@@ -76,6 +69,17 @@ public class DownloadController {
             return getVersionFamilyFromVersion(version);
         }
         return versionFamily;
+    }
+
+    public int getCalculatedBuild() {
+        if (build < 0) {
+            try {
+                return getDownloader().getLatestBuild(getCalculatedVersion());
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return build;
     }
 
     public String getVersion() {
