@@ -2,6 +2,7 @@ package me.deanx.paperupdater;
 
 import org.apache.commons.cli.*;
 
+import java.nio.file.Path;
 import java.util.Scanner;
 
 public class CommandLineMain {
@@ -28,7 +29,11 @@ public class CommandLineMain {
         }
 
         if (main.isDownload) {
-            downloader.download();
+            boolean success = downloader.download();
+            if (success) {
+                Path path = Path.of(downloader.getOutputFile()).toAbsolutePath().normalize();
+                System.out.println("Download successfully.\nFile location: " + path);
+            }
         } else {
             System.out.println("The download URL for version " + downloader.getCalculatedVersion()
                     + " build " + downloader.getCalculatedBuild() + " is:\n" + downloader.getUrl());
