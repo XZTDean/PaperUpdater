@@ -5,8 +5,14 @@ import org.apache.commons.cli.*;
 import java.util.Scanner;
 
 public class CommandLineMain {
-    public static void main(String[] args) throws ParseException {
-        CommandLineMain main = new CommandLineMain(args);
+    public static void main(String[] args) {
+        CommandLineMain main = null;
+        try {
+            main = new CommandLineMain(args);
+        } catch (ParseException e) {
+            System.err.println(e.getLocalizedMessage());
+            System.exit(1);
+        }
 
         if (main.commandLine.hasOption(HELP)) {
             HelpFormatter formatter = new HelpFormatter();
@@ -57,25 +63,26 @@ public class CommandLineMain {
     private DownloadController getDownloadControllerFromInput() {
         DownloadController downloader = new DownloadController();
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Minecraft Version: ");
+        System.out.print("Minecraft Version: ");
         downloader.setVersion(scanner.nextLine());
-        System.out.println("Minecraft Version Family: ");
+        System.out.print("Minecraft Version Family: ");
         downloader.setVersionFamily(scanner.nextLine());
-        System.out.println("Build (blank for latest): ");
+        System.out.print("Build (blank for latest): ");
         String build = scanner.nextLine();
         if (!build.isBlank()) {
             int buildNum = Integer.parseInt(build);
             downloader.setBuild(buildNum);
         }
-        System.out.println("Operation (0: Download, 1: Display Info): ");
+        System.out.print("Operation (0: Download, 1: Display Info): ");
         if (scanner.nextInt() == 1) {
             isDownload = false;
         }
         if (isDownload) {
-            System.out.println("Output File Location: ");
+            System.out.print("Output File Location: ");
             downloader.setOutputFile(scanner.nextLine());
         }
         scanner.close();
+        System.out.println();
         return downloader;
     }
 

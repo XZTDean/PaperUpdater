@@ -53,9 +53,14 @@ public class DownloadController {
     }
 
     public String getCalculatedVersion() {
-        if (version == null && versionFamily != null) {
+        if (version == null) {
             try {
-                String[] versionList = getDownloader().getVersionsFromVersionFamily(versionFamily);
+                String[] versionList;
+                if (versionFamily != null) {
+                    versionList = getDownloader().getVersionsFromVersionFamily(versionFamily);
+                } else {
+                    versionList = getDownloader().getVersions();
+                }
                 return versionList[versionList.length - 1];
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
@@ -121,7 +126,7 @@ public class DownloadController {
             }
         }
         Pattern pattern = Pattern.compile("\\d\\.\\d{1,2}");
-        Matcher matcher = pattern.matcher(version);
+        Matcher matcher = pattern.matcher(versionFamily);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid version family pattern");
         }
