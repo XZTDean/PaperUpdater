@@ -37,7 +37,8 @@ public class Downloader {
         }
         Path backupFile = null;
         if (Files.isRegularFile(outputFile)) {
-            backupFile = Files.createTempFile("paper.jar", ".bak");
+            Path tmpFolder = Files.createTempDirectory("PaperUpdater.");
+            backupFile = Path.of(tmpFolder.toString(), "paper.jar");
             Files.move(outputFile, backupFile);
         }
         HttpResponse<Path> file = client.send(request, HttpResponse.BodyHandlers.ofFile(outputFile));
