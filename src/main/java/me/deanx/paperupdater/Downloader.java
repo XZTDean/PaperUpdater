@@ -9,6 +9,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Downloader {
@@ -31,9 +32,20 @@ public class Downloader {
 
     private boolean downloadJar(String url) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).GET().build();
+        if (Files.isDirectory(outputFile)) {
+            System.out.println("Error: The output path is a directory");
+        }
+        Path backupFile = null;
+        if (Files.isRegularFile(outputFile)) {
+            backupFile = Files.createTempFile("paper.jar", ".bak");
+            Files.move(outputFile, backupFile);
+        }
         HttpResponse<Path> file = client.send(request, HttpResponse.BodyHandlers.ofFile(outputFile));
         if (file.statusCode() >= 400) {
             System.out.println("Error");
+            if (backupFile != null) {
+                Files.move(backupFile, outputFile);
+            }
             return false;
         }
         return true;
