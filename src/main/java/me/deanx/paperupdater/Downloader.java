@@ -46,8 +46,13 @@ public class Downloader {
             System.out.println("Error");
             if (backupFile != null) {
                 Files.move(backupFile, outputFile);
+                Files.deleteIfExists(backupFile.getParent());
             }
             return false;
+        }
+        if (backupFile != null) {
+            Files.deleteIfExists(backupFile);
+            Files.deleteIfExists(backupFile.getParent());
         }
         return true;
     }
