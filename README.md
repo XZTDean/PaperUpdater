@@ -6,7 +6,7 @@ PaperUpdater is a tool provides an easy way to download Minecraft server jar fil
 
 Execute by `java -jar PaperUpdater.jar <arguments>`
 
-e.g. `java -jar PaperUpdater-1.0.jar -v 1.18.2 -b 385 -o paper-1.18.2.jar`
+e.g. `java -jar PaperUpdater.jar -v 1.21.4 -b 118 -o paper-1.21.4.jar`
 
 ### Arguments
 
