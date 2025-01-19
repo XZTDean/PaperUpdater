@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Downloader {
-    private static final String BASE_URL = "https://papermc.io/api/v2/projects/paper/";
+    private static final String BASE_URL = "https://api.papermc.io/v2/projects/paper/";
     private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
     private Path outputFile;
