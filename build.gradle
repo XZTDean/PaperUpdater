@@ -1,10 +1,10 @@
 plugins {
     id 'java'
-    id 'com.gradleup.shadow' version '8.3.5'
+    id 'com.gradleup.shadow' version '9.1.0'
 }
 
-group 'me.deanx'
-version '1.2'
+group = 'me.deanx'
+version = '1.2'
 
 repositories {
     mavenCentral()
@@ -13,8 +13,8 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
-    implementation 'com.google.code.gson:gson:2.11.0'
-    implementation 'commons-cli:commons-cli:1.9.0'
+    implementation 'com.google.code.gson:gson:2.13.2'
+    implementation 'commons-cli:commons-cli:1.10.0'
 }
 
 jar {

@@ -1,12 +1,19 @@
 package me.deanx.paperupdater;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.help.HelpFormatter;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Scanner;
 
 public class CommandLineMain {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         CommandLineMain main = null;
         try {
             main = new CommandLineMain(args);
@@ -16,8 +23,8 @@ public class CommandLineMain {
         }
 
         if (main.commandLine.hasOption(HELP)) {
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("PaperUpdate", options);
+            HelpFormatter formatter = HelpFormatter.builder().get();
+            formatter.printHelp("PaperUpdate", null, options, null, false);
             return;
         }
 
