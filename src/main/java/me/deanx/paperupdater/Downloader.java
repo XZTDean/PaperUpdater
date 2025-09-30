@@ -11,9 +11,16 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import me.deanx.paperupdater.vo.BuildInfoResponse;
+import me.deanx.paperupdater.vo.ProjectResponse;
+import me.deanx.paperupdater.vo.VersionBuildsResponse;
 
 public class Downloader {
-    private static final String BASE_URL = "https://api.papermc.io/v2/projects/paper/";
+    private static final String BASE_URL = "https://fill.papermc.io/v3/projects/paper";
     private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
     private Path outputFile;
@@ -57,62 +64,75 @@ public class Downloader {
         return true;
     }
 
-    public int[] getVersionBuilds(String version) throws IOException, InterruptedException {
-        String url = BASE_URL + "versions/" + version;
+    public List<Integer> getVersionBuilds(String version) throws IOException, InterruptedException {
+        String url = BASE_URL + "/versions/" + version;
         HttpJsonResponse response = httpGetJson(url);
         if (response.statusCode() >= 400) {
             System.out.println("Error");
         }
-        return gson.fromJson(response.getJson().get("builds"), int[].class);
+        VersionBuildsResponse versionBuildsResponse = gson.fromJson(response.getJson(), VersionBuildsResponse.class);
+        return versionBuildsResponse.getBuilds();
     }
 
     public int getLatestBuild(String version) throws IOException, InterruptedException {
-        int[] builds = getVersionBuilds(version);
-        return builds[builds.length - 1];
+        List<Integer> builds = getVersionBuilds(version);
+        return builds.get(0);
     }
 
-    public boolean downloadBuild(String version, int build) throws IOException, InterruptedException {
+    public boolean downloadBuild(String version, String build) throws IOException, InterruptedException {
         String url = getUrl(version, build);
         return downloadJar(url);
     }
 
-    public String getUrl(String version, int build) {
-        String filename = String.format("paper-%s-%d.jar", version, build);
-        return BASE_URL + "versions/" + version + "/builds/" + build + "/downloads/" + filename;
-    }
-
-    public boolean downloadLatestBuild(String version) throws IOException, InterruptedException {
-        int latestBuild = getLatestBuild(version);
-        return downloadBuild(version, latestBuild);
-    }
-
-    public String[] getVersionsFromVersionFamily(String versionFamily) throws IOException, InterruptedException {
-        String url = BASE_URL + "version_group/" + versionFamily;
+    public String getUrl(String version, String build) throws IOException, InterruptedException {
+        String url = BASE_URL + "/versions/" + version + "/builds/" + build;
         HttpJsonResponse response = httpGetJson(url);
         if (response.statusCode() == 404) {
-            throw new IllegalArgumentException(response.getJson().getAsJsonPrimitive("error").getAsString());
+            throw new IllegalArgumentException("Build " + build + " not found for version " + version);
         } else if (response.statusCode() >= 400) {
             throw new RuntimeException("Get response code " + response.statusCode() + " from " + url);
         }
-        return gson.fromJson(response.getJson().get("versions"), String[].class);
+        BuildInfoResponse buildInfo = gson.fromJson(response.getJson(), BuildInfoResponse.class);
+        BuildInfoResponse.DownloadInfo serverDownload = buildInfo.getServerDownload();
+        if (serverDownload == null) {
+            throw new RuntimeException("No server download available for version " + version + " build " + build);
+        }
+        return serverDownload.getUrl();
     }
 
-    public String[] getVersions() throws IOException, InterruptedException {
-        return getProjectInfo("versions");
+    public boolean downloadLatestBuild(String version) throws IOException, InterruptedException {
+        return downloadBuild(version, "latest");
     }
 
-    public String[] getVersionFamilies() throws IOException, InterruptedException {
-        return getProjectInfo("version_groups");
+    public List<String> getVersionsFromVersionFamily(String versionFamily) throws IOException, InterruptedException {
+        ProjectResponse projectResponse = getProjectResponse();
+        List<String> versions = projectResponse.getVersions().get(versionFamily);
+        if (versions == null) {
+            throw new IllegalArgumentException("Version family '" + versionFamily + "' not found");
+        }
+        return versions;
     }
 
-    private String[] getProjectInfo(String field) throws IOException, InterruptedException {
+    public List<String> getVersions() throws IOException, InterruptedException {
+        ProjectResponse projectResponse = getProjectResponse();
+        return projectResponse.getVersions().values().stream()
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getVersionFamilies() throws IOException, InterruptedException {
+        ProjectResponse projectResponse = getProjectResponse();
+        return new ArrayList<>(projectResponse.getVersions().keySet());
+    }
+
+    private ProjectResponse getProjectResponse() throws IOException, InterruptedException {
         HttpJsonResponse response = httpGetJson(BASE_URL);
         if (response.statusCode() == 404) {
             throw new IllegalArgumentException(response.getJson().getAsJsonPrimitive("error").getAsString());
         } else if (response.statusCode() >= 400) {
             throw new RuntimeException("Get response code " + response.statusCode() + " from " + BASE_URL);
         }
-        return gson.fromJson(response.getJson().get(field), String[].class);
+        return gson.fromJson(response.getJson(), ProjectResponse.class);
     }
 
     private HttpJsonResponse httpGetJson(String url) throws IOException, InterruptedException {

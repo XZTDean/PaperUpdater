@@ -1,6 +1,7 @@
 package me.deanx.paperupdater;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +39,7 @@ public class DownloadController {
             if (build < 0) {
                 success = downloader.downloadLatestBuild(version);
             } else {
-                success = downloader.downloadBuild(version, build);
+                success = downloader.downloadBuild(version, Integer.toString(build));
             }
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -49,19 +50,23 @@ public class DownloadController {
     public String getUrl() {
         String version = getCalculatedVersion();
         int build = getCalculatedBuild();
-        return downloader.getUrl(version, build);
+        try {
+            return downloader.getUrl(version, Integer.toString(build));
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getCalculatedVersion() {
         if (version == null) {
             try {
-                String[] versionList;
+                List<String> versionList;
                 if (versionFamily != null) {
                     versionList = getDownloader().getVersionsFromVersionFamily(versionFamily);
                 } else {
                     versionList = getDownloader().getVersions();
                 }
-                return versionList[versionList.length - 1];
+                return versionList.get(0);
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
