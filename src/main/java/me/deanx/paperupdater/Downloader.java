@@ -104,19 +104,29 @@ public class Downloader {
         return downloadBuild(version, "latest");
     }
 
-    public List<String> getVersionsFromVersionFamily(String versionFamily) throws IOException, InterruptedException {
+    public List<String> getVersionsFromVersionFamily(String versionFamily, boolean includePreRelease) throws IOException, InterruptedException {
         ProjectResponse projectResponse = getProjectResponse();
         List<String> versions = projectResponse.getVersions().get(versionFamily);
         if (versions == null) {
             throw new IllegalArgumentException("Version family '" + versionFamily + "' not found");
         }
-        return versions;
+        return filterVersions(versions, includePreRelease);
     }
 
-    public List<String> getVersions() throws IOException, InterruptedException {
+    public List<String> getVersions(boolean includePreRelease) throws IOException, InterruptedException {
         ProjectResponse projectResponse = getProjectResponse();
-        return projectResponse.getVersions().values().stream()
+        List<String> versions = projectResponse.getVersions().values().stream()
                 .flatMap(List::stream)
+                .collect(Collectors.toList());
+        return filterVersions(versions, includePreRelease);
+    }
+
+    private List<String> filterVersions(List<String> versions, boolean includePreRelease) {
+        if (includePreRelease) {
+            return versions;
+        }
+        return versions.stream()
+                .filter(version -> !version.contains("-"))
                 .collect(Collectors.toList());
     }
 

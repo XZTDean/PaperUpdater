@@ -66,6 +66,9 @@ public class CommandLineMain {
         if (commandLine.hasOption(BUILD)) {
             downloader.setBuild(Integer.parseInt(commandLine.getOptionValue(BUILD)));
         }
+        if (commandLine.hasOption(PRE_RELEASE)) {
+            downloader.setIncludePreRelease(true);
+        }
         if (commandLine.hasOption(LIST_INFO)) {
             isDownload = false;
         }
@@ -111,6 +114,9 @@ public class CommandLineMain {
     private static final Option INTERACT = new Option("i", "interact", false, "Interact mode");
     private static final Option HELP = new Option("h", "help", false, "Help page");
 
+    // Version 1.3 new arguments
+    private static final Option PRE_RELEASE = Option.builder("p").longOpt("pre").hasArg(false).desc("Include pre-release versions").since("1.3").get();
+
     static {
         options.addOption(LIST_INFO);
         options.addOption(BUILD);
@@ -118,6 +124,7 @@ public class CommandLineMain {
         options.addOption(VERSION_FAMILY);
         options.addOption(OUTPUT);
         options.addOption(INTERACT);
+        options.addOption(PRE_RELEASE);
         options.addOption(HELP);
     }
 }

@@ -10,6 +10,7 @@ public class DownloadController {
     private String versionFamily;
     private int build;
     private String outputFile;
+    private boolean includePreRelease = false;
     private Downloader downloader = null;
 
     public DownloadController() {
@@ -62,9 +63,9 @@ public class DownloadController {
             try {
                 List<String> versionList;
                 if (versionFamily != null) {
-                    versionList = getDownloader().getVersionsFromVersionFamily(versionFamily);
+                    versionList = getDownloader().getVersionsFromVersionFamily(versionFamily, includePreRelease);
                 } else {
-                    versionList = getDownloader().getVersions();
+                    versionList = getDownloader().getVersions(includePreRelease);
                 }
                 return versionList.get(0);
             } catch (IOException | InterruptedException e) {
@@ -159,6 +160,14 @@ public class DownloadController {
             return;
         }
         this.outputFile = outputFile.strip();
+    }
+
+    public boolean isIncludePreRelease() {
+        return includePreRelease;
+    }
+
+    public void setIncludePreRelease(boolean includePreRelease) {
+        this.includePreRelease = includePreRelease;
     }
 
     private Downloader getDownloader() {
