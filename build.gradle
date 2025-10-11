@@ -21,7 +21,8 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes(
-            'Main-Class': 'me.deanx.paperupdater.CommandLineMain'
+            'Main-Class': 'me.deanx.paperupdater.CommandLineMain',
+            'Implementation-Version': version
         )
     }
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }

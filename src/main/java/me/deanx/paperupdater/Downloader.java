@@ -81,6 +81,7 @@ public class Downloader {
 
     public boolean downloadBuild(String version, String build) throws IOException, InterruptedException {
         String url = getUrl(version, build);
+        System.out.println("Downloading Paper version " + version + " build " + build + "...");
         return downloadJar(url);
     }
 

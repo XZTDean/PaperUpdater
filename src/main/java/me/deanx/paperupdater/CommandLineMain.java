@@ -28,6 +28,11 @@ public class CommandLineMain {
             return;
         }
 
+        if (main.commandLine.hasOption(UPDATE)) {
+            main.handleUpdate();
+            return;
+        }
+
         DownloadController downloader;
         if (main.commandLine.hasOption(INTERACT)) {
             downloader = main.getDownloadControllerFromInput();
@@ -101,6 +106,53 @@ public class CommandLineMain {
         return downloader;
     }
 
+    private void handleUpdate() {
+        System.out.println("Current version: " + SelfUpdater.getCurrentVersion());
+        System.out.println("Checking for updates...");
+
+        SelfUpdater updater = new SelfUpdater();
+        try {
+            SelfUpdater.UpdateInfo updateInfo = updater.checkForUpdates();
+
+            if (!updateInfo.isUpdateAvailable()) {
+                System.out.println("You are already using the latest version.");
+                return;
+            }
+
+            System.out.println("New version available: " + updateInfo.getVersion());
+            System.out.println("Download URL: " + updateInfo.getDownloadUrl());
+            System.out.print("Download update? (y/n): ");
+
+            Scanner scanner = new Scanner(System.in);
+            String response = scanner.nextLine().trim().toLowerCase();
+
+            if (!response.equals("y") && !response.equals("yes")) {
+                System.out.println("Update cancelled.");
+                return;
+            }
+
+            System.out.println("Downloading update...");
+            boolean success = updater.downloadUpdate(updateInfo.getDownloadUrl(), updateInfo.getVersion());
+
+            if (success) {
+                System.out.println("Update downloaded successfully: PaperUpdater-" + updateInfo.getVersion() + ".jar");
+                System.out.print("Delete old versions? (y/n): ");
+                response = scanner.nextLine().trim().toLowerCase();
+
+                if (response.equals("y") || response.equals("yes")) {
+                    updater.deleteOldVersions(updateInfo.getVersion());
+                }
+
+                System.out.println("Update complete! Please use the new version.");
+            } else {
+                System.err.println("Failed to download update.");
+            }
+
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Error checking for updates: " + e.getMessage());
+        }
+    }
+
     private final CommandLine commandLine;
     private boolean isDownload = true;
 
@@ -116,6 +168,7 @@ public class CommandLineMain {
 
     // Version 1.3 new arguments
     private static final Option PRE_RELEASE = Option.builder("p").longOpt("pre").hasArg(false).desc("Include pre-release versions").since("1.3").get();
+    private static final Option UPDATE = Option.builder("u").longOpt("update").hasArg(false).desc("Check for and download updates").since("1.3").get();
 
     static {
         options.addOption(LIST_INFO);
@@ -125,6 +178,7 @@ public class CommandLineMain {
         options.addOption(OUTPUT);
         options.addOption(INTERACT);
         options.addOption(PRE_RELEASE);
+        options.addOption(UPDATE);
         options.addOption(HELP);
     }
 }
